@@ -1,6 +1,5 @@
 /**
- * Shared test fixtures. Lifted from swarmit-curator/test/helpers/fixtures.js
- * with curator-specific bits (chainEvent, setupTestEnv) removed.
+ * Shared test fixtures for builders, validators, and encoders.
  */
 
 import { TYPES } from '../../src/objects/constants.js';

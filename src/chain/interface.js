@@ -3,7 +3,7 @@
  * Consumers use `iface.parseLog(log)` for decoding and `TOPICS[eventName]` for filtering.
  */
 
-import { Interface } from 'ethers';
+import { Interface, ZeroHash } from 'ethers';
 import { ABI } from './abi.js';
 
 export const iface = new Interface(ABI);
@@ -16,4 +16,4 @@ export const TOPICS = {
   VoteSet: iface.getEvent('VoteSet').topicHash,
 };
 
-export const BYTES32_ZERO = '0x' + '0'.repeat(64);
+export { ZeroHash as BYTES32_ZERO };

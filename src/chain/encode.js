@@ -1,19 +1,13 @@
 /**
  * Calldata encoders for SwarmitRegistryV2 write methods.
  *
- * Each encoder:
- *   - Accepts human-form args (slugs, bzz:// refs)
- *   - Converts to bytes32 internally via slugToBoardId / refToBytes32
- *   - Returns a 0x-prefixed hex calldata string from iface.encodeFunctionData
+ * Each encoder accepts human-form args (slugs, bzz:// refs), converts them
+ * to bytes32 internally, and returns hex calldata from iface.encodeFunctionData.
+ * The consumer wraps the result in a transaction and sends it with their
+ * own signer.
  *
- * The consumer is responsible for wrapping the result in a transaction
- * and sending it via whatever signer mechanism they use (ethers.Wallet,
- * window.ethereum, WalletConnect, …).
- *
- * NAMING NOTE: parameters that carry bzz:// refs are named *Ref, never *Id.
- * On-chain IDs are the bytes32 values derived from the refs and are produced
- * internally by the encoders. This differs intentionally from the legacy
- * naming in swarmit/src/chain/transactions.js, which called refs *Id.
+ * Naming convention: parameters carrying bzz:// refs are named *Ref.
+ * On-chain bytes32 IDs are derived internally and never exposed in the API.
  */
 
 import { slugToBoardId, refToBytes32 } from '../references.js';

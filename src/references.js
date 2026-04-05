@@ -4,9 +4,10 @@
  * Pure logic, no I/O.
  */
 
-import { keccak256, toUtf8Bytes } from 'ethers';
+import { id } from 'ethers';
 
 const HEX_64_RE = /^[0-9a-f]{64}$/i;
+const HEX_64_LOWER_RE = /^[0-9a-f]{64}$/;
 
 /**
  * Extract and validate a 64-char hex reference from a bzz:// URL or bare hex string.
@@ -49,8 +50,6 @@ export function isValidRef(ref) {
  * @param {string} ref
  * @returns {boolean}
  */
-const HEX_64_LOWER_RE = /^[0-9a-f]{64}$/;
-
 export function isValidBzzRef(ref) {
   if (!ref || typeof ref !== 'string' || !ref.startsWith('bzz://')) return false;
   return HEX_64_LOWER_RE.test(ref.slice(6));
@@ -104,11 +103,11 @@ export function bytes32ToRef(b32) {
 
 /**
  * Derive on-chain boardId from a human-readable slug.
- * boardId = keccak256(bytes(slug))
+ * boardId = keccak256(bytes(slug)) — matches the contract invariant at SwarmitRegistryV2.sol:78.
  * @param {string} slug
  * @returns {string} 0x-prefixed bytes32
  */
 export function slugToBoardId(slug) {
   if (!slug || typeof slug !== 'string') throw new Error('Board slug is required');
-  return keccak256(toUtf8Bytes(slug));
+  return id(slug);
 }

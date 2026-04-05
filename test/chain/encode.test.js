@@ -1,8 +1,32 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { ABI, iface, TOPICS, BYTES32_ZERO, encode } from '../../src/chain/index.js';
+import { ABI, iface, TOPICS, BYTES32_ZERO, encode, VOTE } from '../../src/chain/index.js';
 import { slugToBoardId, refToBytes32 } from '../../src/references.js';
 import { VALID_BZZ, VALID_BZZ_2, VALID_BZZ_3 } from '../helpers/fixtures.js';
+
+describe('VOTE constants', () => {
+  it('exports UP/CLEAR/DOWN as 1/0/-1', () => {
+    assert.equal(VOTE.UP, 1);
+    assert.equal(VOTE.CLEAR, 0);
+    assert.equal(VOTE.DOWN, -1);
+  });
+
+  it('is frozen', () => {
+    assert.ok(Object.isFrozen(VOTE));
+  });
+
+  it('can be used interchangeably with numeric literals in encode.setVote', () => {
+    const withConst = encode.setVote({ submissionRef: VALID_BZZ, direction: VOTE.UP });
+    const withLiteral = encode.setVote({ submissionRef: VALID_BZZ, direction: 1 });
+    assert.equal(withConst, withLiteral);
+  });
+});
+
+describe('BYTES32_ZERO (re-exported from ethers.ZeroHash)', () => {
+  it('matches 0x + 64 zeros', () => {
+    assert.equal(BYTES32_ZERO, '0x' + '0'.repeat(64));
+  });
+});
 
 // ===========================================
 // ABI / interface / TOPICS
@@ -77,12 +101,6 @@ describe('TOPICS', () => {
     const topics = Object.values(TOPICS);
     const unique = new Set(topics);
     assert.equal(unique.size, topics.length);
-  });
-});
-
-describe('BYTES32_ZERO', () => {
-  it('is 0x followed by 64 zeros', () => {
-    assert.equal(BYTES32_ZERO, '0x' + '0'.repeat(64));
   });
 });
 

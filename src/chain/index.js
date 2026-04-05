@@ -11,3 +11,9 @@
 export { ABI } from './abi.js';
 export { iface, TOPICS, BYTES32_ZERO } from './interface.js';
 export { encode } from './encode.js';
+
+/**
+ * Named constants for setVote direction. The contract takes int8; consumers
+ * can use either the numeric literals or these constants interchangeably.
+ */
+export const VOTE = Object.freeze({ UP: 1, CLEAR: 0, DOWN: -1 });

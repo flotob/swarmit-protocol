@@ -10,8 +10,31 @@
  * For the Node Bee client (bee-js wrapper) use `swarmit-protocol/swarm`.
  */
 
-// Objects (builders + validators + constants)
-export * from './objects/index.js';
+// Constants
+export { TYPES, PROTOCOL_VERSION, PROTOCOL_PREFIX } from './objects/constants.js';
+
+// Object builders (9)
+export {
+  buildBoard, buildPost, buildReply, buildSubmission,
+  buildUserFeedIndex, buildBoardIndex, buildThreadIndex,
+  buildGlobalIndex, buildCuratorProfile,
+} from './objects/builders.js';
+
+// Object validators (9 + dispatcher). Note: named validators return string[]
+// (empty = valid). The dispatcher `validate()` returns { valid, errors } for
+// ergonomic boolean checks. Pick the shape that fits your call site.
+export {
+  validateBoard, validatePost, validateReply, validateSubmission,
+  validateUserFeedIndex, validateBoardIndex, validateThreadIndex,
+  validateGlobalIndex, validateCuratorProfile,
+  validate,
+} from './objects/validators.js';
 
 // Reference helpers
-export * from './references.js';
+export {
+  refToHex, hexToBzz,
+  isValidRef, isValidBzzRef,
+  hexToBytes32, bytes32ToHex,
+  refToBytes32, bytes32ToRef,
+  slugToBoardId,
+} from './references.js';

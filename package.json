@@ -8,7 +8,8 @@
     "./objects": "./src/objects/index.js",
     "./references": "./src/references.js",
     "./chain": "./src/chain/index.js",
-    "./swarm": "./src/swarm/index.js"
+    "./swarm": "./src/swarm/index.js",
+    "./package.json": "./package.json"
   },
   "scripts": {
     "test": "node --test"
