@@ -37,7 +37,7 @@ const DEFAULT_CACHE_MAX = 2000;
  * }}
  */
 export function createBeeClient({ beeUrl, postageBatchId, privateKey, cacheMax = DEFAULT_CACHE_MAX } = {}) {
-  if (!beeUrl) throw new Error('createBeeClient: beeUrl is required');
+  if (!beeUrl) throw new Error('swarmit-protocol/swarm: beeUrl is required');
 
   const bee = new Bee(beeUrl);
   // Map preserves insertion order, so `cache.keys().next().value` is always the
@@ -53,13 +53,13 @@ export function createBeeClient({ beeUrl, postageBatchId, privateKey, cacheMax =
 
   function requirePostageBatch(operation) {
     if (!postageBatchId) {
-      throw new Error(`createBeeClient: postageBatchId is required for ${operation}`);
+      throw new Error(`swarmit-protocol/swarm: postageBatchId is required for ${operation}`);
     }
   }
 
   function requireSigner(operation) {
     if (!signer) {
-      throw new Error(`createBeeClient: privateKey is required for ${operation}`);
+      throw new Error(`swarmit-protocol/swarm: privateKey is required for ${operation}`);
     }
   }
 

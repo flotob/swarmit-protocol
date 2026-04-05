@@ -11,7 +11,10 @@
  */
 
 // Constants
-export { TYPES, PROTOCOL_VERSION, PROTOCOL_PREFIX } from './objects/constants.js';
+export {
+  TYPES, PROTOCOL_VERSION, PROTOCOL_PREFIX,
+  RECOMMENDED_VIEW_NAMES, RECOMMENDED_RANKED_VIEW_NAMES,
+} from './objects/constants.js';
 
 // Object builders (9)
 export {

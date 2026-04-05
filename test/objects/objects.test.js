@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   TYPES,
+  RECOMMENDED_VIEW_NAMES, RECOMMENDED_RANKED_VIEW_NAMES,
   buildBoard, buildPost, buildReply, buildSubmission,
   buildUserFeedIndex, buildBoardIndex, buildThreadIndex,
   buildGlobalIndex, buildCuratorProfile,
@@ -18,6 +19,31 @@ import {
   validUserFeedIndex, validBoardIndex, validThreadIndex,
   validGlobalIndex, validCuratorProfile,
 } from '../helpers/fixtures.js';
+
+// ===========================================
+// Recommended view names
+// ===========================================
+
+describe('RECOMMENDED_VIEW_NAMES / RECOMMENDED_RANKED_VIEW_NAMES', () => {
+  it('includes the 5 canonical v1 view names in order', () => {
+    assert.deepEqual(RECOMMENDED_VIEW_NAMES, ['new', 'best', 'hot', 'rising', 'controversial']);
+  });
+
+  it('ranked view names exclude "new" (which is chronological)', () => {
+    assert.deepEqual(RECOMMENDED_RANKED_VIEW_NAMES, ['best', 'hot', 'rising', 'controversial']);
+  });
+
+  it('ranked is a subset of all', () => {
+    for (const view of RECOMMENDED_RANKED_VIEW_NAMES) {
+      assert.ok(RECOMMENDED_VIEW_NAMES.includes(view), `${view} missing from RECOMMENDED_VIEW_NAMES`);
+    }
+  });
+
+  it('both arrays are frozen (immutable)', () => {
+    assert.ok(Object.isFrozen(RECOMMENDED_VIEW_NAMES));
+    assert.ok(Object.isFrozen(RECOMMENDED_RANKED_VIEW_NAMES));
+  });
+});
 
 // ===========================================
 // Builders

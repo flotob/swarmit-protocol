@@ -5,4 +5,7 @@
 
 export * from './builders.js';
 export * from './validators.js';
-export { TYPES, PROTOCOL_VERSION, PROTOCOL_PREFIX } from './constants.js';
+export {
+  TYPES, PROTOCOL_VERSION, PROTOCOL_PREFIX,
+  RECOMMENDED_VIEW_NAMES, RECOMMENDED_RANKED_VIEW_NAMES,
+} from './constants.js';
