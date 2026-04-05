@@ -1,6 +1,6 @@
 {
   "name": "swarmit-protocol",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Shared JavaScript implementation of the Swarmit (Swarm Message Board v1) protocol: object builders, validators, reference helpers, SwarmitRegistryV2 ABI and calldata encoders, and an optional Node Bee client. Consumed by swarmit (Vue web app), swarmit-curator, swarmit-dashboard, and swarmit-bot.",
   "type": "module",
   "files": [

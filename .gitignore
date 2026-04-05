@@ -3,3 +3,8 @@ node_modules
 coverage
 .env
 *.log
+
+# Foundry build artifacts (contracts/)
+contracts/out/
+contracts/cache/
+contracts/broadcast/
