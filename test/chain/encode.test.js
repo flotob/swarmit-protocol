@@ -123,9 +123,25 @@ describe('encode.registerBoard', () => {
   });
 
   // Golden calldata — fixed input → fixed output.
-  // Fails if either the ABI signature or the encoder logic changes.
+  //
+  // Fails if the ABI signature, encoder logic, slugToBoardId, or refToBytes32
+  // change. The round-trip tests above protect against encoder/decoder drift;
+  // these literal assertions additionally protect against ABI-and-encoder
+  // drifting *together* in a wrong-but-consistent way.
+  //
+  // Day-1 correctness: the 6 golden hex values in this file were
+  // independently verified byte-for-byte against Foundry's `cast calldata`
+  // (a Rust ABI encoder in alloy-core, no relation to ethers.js). Two
+  // completely separate encoder implementations agreeing on the output is
+  // our evidence that these values aren't just circularly pinned from a
+  // buggy encoder. To re-verify:
+  //
+  //     cast calldata 'registerBoard(bytes32,string,string)' \
+  //         $(cast keccak "hn") "hn" "bzz://$(printf 'a%.0s' {1..64})"
+  //
   // To regenerate on an intentional ABI change: run the encoder with the
-  // same inputs and paste the new hex here. Never "fix" by changing inputs.
+  // same inputs, paste the new hex here, AND re-verify with `cast`.
+  // Never "fix" a failing golden by silently changing the inputs.
   it('golden calldata', () => {
     const data = encode.registerBoard({ slug: 'hn', boardRef: VALID_BZZ });
     assert.equal(
