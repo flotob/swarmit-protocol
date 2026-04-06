@@ -46,3 +46,15 @@ export const RECOMMENDED_RANKED_VIEW_NAMES = Object.freeze([
   'rising',
   'controversial',
 ]);
+
+/**
+ * Canonical Swarm feed topic name for the curator profile feed.
+ *
+ * Curators publish their curatorProfile to a stable feed using this topic.
+ * The feed manifest ref (derived from this topic + the curator's key) is what
+ * gets declared on-chain via CuratorDeclared. Profile updates become feed
+ * writes — no gas, no chain churn.
+ *
+ * Versioned so a future schema change can use a new topic without colliding.
+ */
+export const CURATOR_PROFILE_FEED_NAME = 'curator-profile-v1';

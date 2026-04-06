@@ -8,4 +8,5 @@ export * from './validators.js';
 export {
   TYPES, PROTOCOL_VERSION, PROTOCOL_PREFIX,
   RECOMMENDED_VIEW_NAMES, RECOMMENDED_RANKED_VIEW_NAMES,
+  CURATOR_PROFILE_FEED_NAME,
 } from './constants.js';

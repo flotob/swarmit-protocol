@@ -94,8 +94,15 @@ function setVote({ submissionRef, direction }) {
 
 /**
  * Encode declareCurator. The tx sender (msg.sender) is the curator identity.
+ *
+ * curatorProfileRef is the stable Swarm locator for the curator profile.
+ * In v1.x practice this should be the curator's profile feed manifest ref
+ * (a Swarm feed that always resolves to the latest curatorProfile JSON).
+ * The contract accepts any string; the feed-manifest convention is a
+ * protocol-level recommendation, not an on-chain enforcement.
+ *
  * @param {Object} params
- * @param {string} params.curatorProfileRef - bzz:// reference to the curatorProfile object
+ * @param {string} params.curatorProfileRef - stable Swarm locator (feed manifest ref) for the curatorProfile
  * @returns {string} 0x-prefixed calldata hex
  */
 function declareCurator({ curatorProfileRef }) {

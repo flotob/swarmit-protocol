@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   TYPES,
   RECOMMENDED_VIEW_NAMES, RECOMMENDED_RANKED_VIEW_NAMES,
+  CURATOR_PROFILE_FEED_NAME,
   buildBoard, buildPost, buildReply, buildSubmission,
   buildUserFeedIndex, buildBoardIndex, buildThreadIndex,
   buildGlobalIndex, buildCuratorProfile,
@@ -42,6 +43,17 @@ describe('RECOMMENDED_VIEW_NAMES / RECOMMENDED_RANKED_VIEW_NAMES', () => {
   it('both arrays are frozen (immutable)', () => {
     assert.ok(Object.isFrozen(RECOMMENDED_VIEW_NAMES));
     assert.ok(Object.isFrozen(RECOMMENDED_RANKED_VIEW_NAMES));
+  });
+});
+
+describe('CURATOR_PROFILE_FEED_NAME', () => {
+  it('equals the versioned topic string', () => {
+    assert.equal(CURATOR_PROFILE_FEED_NAME, 'curator-profile-v1');
+  });
+
+  it('is a non-empty string', () => {
+    assert.equal(typeof CURATOR_PROFILE_FEED_NAME, 'string');
+    assert.ok(CURATOR_PROFILE_FEED_NAME.length > 0);
   });
 });
 
