@@ -40,6 +40,28 @@ The Solidity contracts live in [`contracts/`](./contracts) as a Foundry project.
 
 Contract development requires [Foundry](https://getfoundry.sh/). JS consumers installing via `npm` / git dep don't pull the `contracts/` directory — the `files` allowlist in `package.json` excludes it.
 
+## Deploying the contract
+
+Deploy a fresh `SwarmitRegistryV2` to Gnosis Chain:
+
+```bash
+cd contracts
+~/.foundry/bin/forge script script/DeployV2.s.sol \
+  --rpc-url https://rpc.gnosischain.com \
+  --broadcast \
+  --private-key <PRIVATE_KEY_WITH_XDAI>
+```
+
+The script prints the new contract address. After deploying, update these:
+
+| What | Where |
+|---|---|
+| `CONTRACT_ADDRESS` | Curator `.env` / Coolify env vars |
+| `CONTRACT_ADDRESS` | SPA `src/config.js` |
+| `CONTRACT_DEPLOY_BLOCK` | Both (set to the deployment tx's block number so indexers don't scan ancient history) |
+
+You can find the deploy block on [Gnosisscan](https://gnosisscan.io) by searching for the deployment tx hash.
+
 ## Keeping the library in sync with the contract
 
 When `contracts/src/SwarmitRegistryV2.sol` changes:
