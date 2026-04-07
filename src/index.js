@@ -34,6 +34,9 @@ export {
   validate,
 } from './objects/validators.js';
 
+// Fallback display names
+export { addressToFallbackName, FALLBACK_NAME_VERSION } from './names.js';
+
 // Reference helpers
 export {
   refToHex, hexToBzz,
