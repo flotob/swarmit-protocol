@@ -136,7 +136,7 @@ Reasoning:
 
 - `ERC721` gives us transfers, approvals, and standard wallet/tooling compatibility
 - `Enumerable` adds gas and storage overhead we do not need for MVP
-- `URIStorage` is unnecessary unless we decide to ship custom NFT metadata immediately
+- `URIStorage` is unnecessary for MVP because we can implement a simple deterministic `tokenURI()` override directly
 
 ## OpenZeppelin dependency
 
@@ -252,6 +252,26 @@ event PrimaryNameSet(address indexed owner, uint256 indexed tokenId, string name
 
 The standard `Transfer` event from `ERC721` remains canonical for ownership transfer.
 
+## Metadata / `tokenURI`
+
+Do not leave metadata behavior implicit.
+
+For MVP, implement a simple deterministic `tokenURI(uint256 tokenId)` override that returns a data URI JSON payload containing at least:
+
+- `name`
+- `description`
+
+Recommended behavior:
+
+- token name in metadata should include the username, for example `"@alice"`
+- description should state that this is a Swarmit username
+
+Reasoning:
+
+- wallets and explorers will query `tokenURI`
+- a simple on-chain data URI gives us acceptable ERC-721 UX without adding storage-heavy URI management
+- this is sufficient for MVP and avoids `ERC721URIStorage`
+
 ## Claim flow
 
 `claim(name, maxPrice)` should:
@@ -275,6 +295,12 @@ Why `maxPrice` exists:
 - the price can move upward between quote time and inclusion time
 - `maxPrice` gives the user slippage protection
 
+Important:
+
+- `maxPrice` is a revert guard, not the charged price
+- the actual charged price is always `currentMintPrice()` at execution time
+- any overpayment above the actual price is refunded
+
 ## Refund handling
 
 Because `claim` may accept `msg.value > currentMintPrice()`, the contract must refund the difference safely.
@@ -286,6 +312,13 @@ Recommended implementation:
 - perform refund at the end using `call`
 - revert if refund fails
 
+Apply the same explicit review to `withdraw(address payable to)`:
+
+- either mark it `nonReentrant`
+- or document clearly why it is safe without it
+
+The safer MVP choice is to mark `withdraw` as `nonReentrant` too.
+
 ## Primary-name semantics
 
 Primary-name behavior should be:
@@ -293,7 +326,7 @@ Primary-name behavior should be:
 - on mint:
   - auto-set as primary if the owner has none
 - on `setPrimaryName(tokenId)`:
-  - require caller is owner or approved operator
+  - require caller is the token owner
   - set `primaryTokenOf[owner] = tokenId`
   - emit `PrimaryNameSet`
 - on transfer:
@@ -302,6 +335,11 @@ Primary-name behavior should be:
   - if recipient already has a primary, leave it unchanged
 
 Implement transfer-side primary updates by overriding the OZ 5.x `_update` hook.
+
+Important:
+
+- `_update` is used for both mints and transfers in OZ 5.x
+- mint-path logic must explicitly guard `from == address(0)` and transfer-path logic must not accidentally clear or mutate primary state as if minting were a transfer
 
 ## Read model
 
@@ -342,9 +380,13 @@ Do not implement yet:
 
 ## Pure username helpers
 
-Extend the shared pure-name surface so username syntax is not reimplemented in every app.
+Extend the shared pure-username surface so username syntax is not reimplemented in every app.
 
-Recommended additions in a pure module:
+Recommended additions in a new pure module separate from fallback names:
+
+- `src/usernames.js`
+
+Recommended exports:
 
 - `normalizeUsernameInput(name)` — trim + lowercase for UI convenience
 - `isValidUsername(name)` — boolean
@@ -355,7 +397,13 @@ The fallback-name helper already exists:
 
 - `addressToFallbackName(address)`
 
-Do **not** mix on-chain username lookup into the pure helper module.
+Do **not** mix:
+
+- fallback-name generation from addresses
+- username syntax validation
+- on-chain registry lookup
+
+into one module.
 
 ## New JS subpath for the registry contract
 
@@ -400,6 +448,7 @@ Update `package.json` exports with:
 Add:
 
 - pure helper tests for valid/invalid usernames
+- pure helper tests for normalization
 - ABI fragment count / interface lookup tests
 - golden calldata tests for:
   - `claim`
@@ -447,6 +496,7 @@ Required Foundry tests:
 - duplicate name reverts
 - underpay reverts
 - `maxPrice` below current price reverts
+- actual charged price equals `currentMintPrice()` rather than `maxPrice`
 - overpay refunds the difference
 - token ID increments sequentially
 - `UsernameClaimed` event emitted correctly
@@ -462,10 +512,10 @@ Required Foundry tests:
 - first mint auto-sets primary
 - later mint does not overwrite existing primary
 - `setPrimaryName` works for owner
-- approved operator can set primary if desired
-- unapproved caller reverts
+- non-owner reverts
 - `primaryNameOf(address)` returns empty string when none set
 - `PrimaryNameSet` emits on explicit change
+- mint path through `_update` does not incorrectly trigger transfer-only clearing logic
 
 ### Transfer behavior
 
@@ -478,6 +528,7 @@ Required Foundry tests:
 
 - owner can withdraw
 - non-owner cannot withdraw
+- reentrancy-safe withdraw path behaves correctly
 
 ## Deployment script
 
@@ -646,6 +697,11 @@ Transaction behavior:
 - on success:
   - invalidate local username cache for the connected address
   - refresh display name
+
+SPA note:
+
+- the SPA must treat `maxPrice` as slippage tolerance, not as the expected final charged amount
+- success UI should display the actual paid price from the transaction context if available, otherwise the quoted price
 
 ## Primary-name UI
 

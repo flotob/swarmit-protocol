@@ -37,6 +37,11 @@ export {
 // Fallback display names
 export { addressToFallbackName, FALLBACK_NAME_VERSION } from './names.js';
 
+// Username validation helpers
+export {
+  normalizeUsernameInput, isValidUsername, validateUsername, usernameHash,
+} from './usernames.js';
+
 // Reference helpers
 export {
   refToHex, hexToBzz,
