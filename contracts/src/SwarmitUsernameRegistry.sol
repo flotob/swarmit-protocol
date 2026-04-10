@@ -118,8 +118,9 @@ contract SwarmitUsernameRegistry is ERC721, Ownable, ReentrancyGuard {
 
         tokenId = next;
         _nextTokenId = next + 1;
-        _safeMint(msg.sender, tokenId);
 
+        // Write all registry state BEFORE _safeMint so that a contract
+        // recipient observes consistent metadata during onERC721Received.
         _nameByTokenId[tokenId] = name;
         tokenIdByNameHash[nameHash] = tokenId;
 
@@ -127,6 +128,8 @@ contract SwarmitUsernameRegistry is ERC721, Ownable, ReentrancyGuard {
         if (autoSetPrimary) {
             primaryTokenOf[msg.sender] = tokenId;
         }
+
+        _safeMint(msg.sender, tokenId);
 
         emit UsernameClaimed(msg.sender, tokenId, name, price);
         if (autoSetPrimary) {

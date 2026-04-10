@@ -424,4 +424,57 @@ contract SwarmitUsernameRegistryTest is Test {
         assertEq(registry.symbol(), "SWARMU");
     }
 
+    // ============================================
+    // Contract recipient sees consistent state in onERC721Received
+    // ============================================
+
+    function test_claim_contractRecipient_seesConsistentState() public {
+        ClaimingReceiver receiver = new ClaimingReceiver(registry);
+        vm.deal(address(receiver), 10 ether);
+
+        receiver.claimAndVerify("receiverone");
+
+        // Reaching this line means the receiver's onERC721Received asserts
+        // all passed (otherwise claimAndVerify reverts).
+        assertEq(registry.primaryNameOf(address(receiver)), "receiverone");
+        assertEq(registry.nameOfToken(1), "receiverone");
+    }
+}
+
+/// @dev Contract that claims a username and, during onERC721Received,
+///      verifies that the registry already exposes consistent metadata
+///      for the just-minted token.
+contract ClaimingReceiver {
+    SwarmitUsernameRegistry public immutable registry;
+    string public expectedName;
+
+    constructor(SwarmitUsernameRegistry _registry) {
+        registry = _registry;
+    }
+
+    function claimAndVerify(string calldata name) external {
+        expectedName = name;
+        uint256 price = registry.currentMintPrice();
+        registry.claim{value: price}(name, price);
+    }
+
+    function onERC721Received(
+        address, /* operator */
+        address, /* from */
+        uint256 tokenId,
+        bytes calldata /* data */
+    ) external view returns (bytes4) {
+        require(
+            keccak256(bytes(registry.nameOfToken(tokenId))) == keccak256(bytes(expectedName)),
+            "nameOfToken not yet written"
+        );
+        require(
+            keccak256(bytes(registry.primaryNameOf(address(this)))) == keccak256(bytes(expectedName)),
+            "primaryNameOf not yet written"
+        );
+        require(registry.ownerOf(tokenId) == address(this), "ownerOf mismatch");
+        return this.onERC721Received.selector;
+    }
+
+    receive() external payable {}
 }

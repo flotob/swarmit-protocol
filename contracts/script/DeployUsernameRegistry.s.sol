@@ -10,19 +10,22 @@ contract DeployUsernameRegistryScript is Script {
     uint256 constant PRICE_STEP = 0.0001 ether;
 
     function run() public {
-        address deployer = msg.sender;
+        // Require an explicit OWNER env var. Capturing msg.sender here
+        // would silently pick up Foundry's default simulated sender when
+        // broadcasting via --account or --ledger rather than --private-key.
+        address owner = vm.envAddress("OWNER");
 
         vm.startBroadcast();
         SwarmitUsernameRegistry registry = new SwarmitUsernameRegistry(
             BASE_MINT_PRICE,
             PRICE_STEP,
-            deployer
+            owner
         );
         vm.stopBroadcast();
 
         console.log("SwarmitUsernameRegistry deployed at:", address(registry));
         console.log("  baseMintPrice:", BASE_MINT_PRICE);
         console.log("  priceStep:    ", PRICE_STEP);
-        console.log("  owner:        ", deployer);
+        console.log("  owner:        ", owner);
     }
 }
