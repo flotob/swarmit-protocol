@@ -20,7 +20,7 @@ export {
 // Object builders (9)
 export {
   buildBoard, buildPost, buildReply, buildSubmission,
-  buildUserFeedIndex, buildBoardIndex, buildThreadIndex,
+  buildUserFeedEntry, buildBoardIndex, buildThreadIndex,
   buildGlobalIndex, buildCuratorProfile,
 } from './objects/builders.js';
 
@@ -29,7 +29,7 @@ export {
 // ergonomic boolean checks. Pick the shape that fits your call site.
 export {
   validateBoard, validatePost, validateReply, validateSubmission,
-  validateUserFeedIndex, validateBoardIndex, validateThreadIndex,
+  validateUserFeedEntry, validateBoardIndex, validateThreadIndex,
   validateGlobalIndex, validateCuratorProfile,
   validate,
 } from './objects/validators.js';
@@ -41,6 +41,17 @@ export { addressToFallbackName, FALLBACK_NAME_VERSION } from './names.js';
 export {
   normalizeUsernameInput, isValidUsername, validateUsername, usernameHash,
 } from './usernames.js';
+
+// Board slug validation helpers
+export {
+  normalizeBoardSlugInput, isValidBoardSlug, validateBoardSlug,
+} from './slugs.js';
+
+// Feed helpers
+export {
+  topicToContractFormat, topicToSwarmFormat,
+  feedIdFromCoordinates, decodeFeedPayload, decodeFeedJSON,
+} from './feeds.js';
 
 // Reference helpers
 export {

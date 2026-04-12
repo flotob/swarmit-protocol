@@ -5,7 +5,8 @@
  */
 
 import { TYPES } from './constants.js';
-import { isValidRef, isValidBzzRef } from '../references.js';
+import { isValidRef, isValidBzzRef, slugToBoardId } from '../references.js';
+import { isValidBoardSlug } from '../slugs.js';
 
 // ============================================
 // Shared validation helpers
@@ -57,6 +58,17 @@ function requireBzzRef(obj, field) {
   return null;
 }
 
+const BYTES32_RE = /^0x[0-9a-f]{64}$/;
+
+function requireBytes32(obj, field) {
+  const err = requireString(obj, field);
+  if (err) return err;
+  if (!BYTES32_RE.test(obj[field])) {
+    return `${field} must be a 0x-prefixed 32-byte hex hash`;
+  }
+  return null;
+}
+
 function requireProtocol(obj, expectedType) {
   if (obj.protocol !== expectedType) {
     return `protocol must be "${expectedType}", got "${obj.protocol}"`;
@@ -67,14 +79,10 @@ function requireProtocol(obj, expectedType) {
 function requireAuthorRef(obj) {
   const err = requireObject(obj, 'author');
   if (err) return [err];
-  const errors = [];
   if (!obj.author.address || typeof obj.author.address !== 'string') {
-    errors.push('author.address is required');
+    return ['author.address is required'];
   }
-  if (!obj.author.userFeed || !isValidBzzRef(obj.author.userFeed)) {
-    errors.push('author.userFeed must be a normalized bzz:// reference');
-  }
-  return errors.length ? errors : null;
+  return null;
 }
 
 function requireBody(obj) {
@@ -143,6 +151,10 @@ function validateEntries(entries, requiredFields, label) {
         if (!entry[field.name] || typeof entry[field.name] !== 'string') {
           errors.push(`${label}[${i}].${field.name} is required and must be a string`);
         }
+      } else if (field.type === 'bytes32') {
+        if (!entry[field.name] || typeof entry[field.name] !== 'string' || !BYTES32_RE.test(entry[field.name])) {
+          errors.push(`${label}[${i}].${field.name} must be a 0x-prefixed 32-byte hex hash`);
+        }
       } else if (field.type === 'number') {
         if (typeof entry[field.name] !== 'number') {
           errors.push(`${label}[${i}].${field.name} is required and must be a number`);
@@ -203,7 +215,7 @@ function collectErrors(...checks) {
  * Validate a board object. Returns array of error strings, or empty array if valid.
  */
 export function validateBoard(obj) {
-  return collectErrors(
+  const errors = collectErrors(
     requireProtocol(obj, TYPES.BOARD),
     requireString(obj, 'boardId'),
     requireString(obj, 'slug'),
@@ -212,6 +224,14 @@ export function validateBoard(obj) {
     requireNumber(obj, 'createdAt'),
     requireObject(obj, 'governance'),
   );
+  if (obj.slug && typeof obj.slug === 'string') {
+    if (!isValidBoardSlug(obj.slug)) {
+      errors.push('slug must be a canonical board slug');
+    } else if (obj.boardId && obj.boardId !== slugToBoardId(obj.slug)) {
+      errors.push('boardId must equal keccak256(bytes(slug))');
+    }
+  }
+  return errors;
 }
 
 /**
@@ -268,7 +288,7 @@ export function validateReply(obj) {
 export function validateSubmission(obj) {
   const errors = collectErrors(
     requireProtocol(obj, TYPES.SUBMISSION),
-    requireString(obj, 'boardId'),
+    requireBytes32(obj, 'boardId'),
     requireString(obj, 'kind'),
     requireBzzRef(obj, 'contentRef'),
     requireAuthorRef(obj),
@@ -295,23 +315,21 @@ export function validateSubmission(obj) {
 }
 
 /**
- * Validate a userFeedIndex object.
+ * Validate a userFeedEntry object — a single journal entry.
  */
-export function validateUserFeedIndex(obj) {
+export function validateUserFeedEntry(obj) {
   const errors = collectErrors(
-    requireProtocol(obj, TYPES.USER_FEED),
-    requireString(obj, 'author'),
-    requireNumber(obj, 'updatedAt'),
-    requireArray(obj, 'entries'),
+    requireProtocol(obj, TYPES.USER_FEED_ENTRY),
+    requireBzzRef(obj, 'submissionRef'),
+    requireString(obj, 'boardSlug'),
+    requireString(obj, 'kind'),
+    requireNumber(obj, 'createdAt'),
   );
-  if (Array.isArray(obj.entries)) {
-    errors.push(...(validateEntries(obj.entries, [
-      { name: 'submissionId', bzz: true },
-      { name: 'submissionRef', bzz: true },
-      { name: 'boardId', type: 'string' },
-      { name: 'kind', type: 'string' },
-      { name: 'createdAt', type: 'number' },
-    ], 'entries') || []));
+  if (obj.boardSlug && typeof obj.boardSlug === 'string' && !isValidBoardSlug(obj.boardSlug)) {
+    errors.push('boardSlug must be a canonical board slug');
+  }
+  if (obj.kind && typeof obj.kind === 'string' && obj.kind !== 'post' && obj.kind !== 'reply') {
+    errors.push('kind must be "post" or "reply"');
   }
   return errors;
 }
@@ -322,7 +340,7 @@ export function validateUserFeedIndex(obj) {
 export function validateBoardIndex(obj) {
   const errors = collectErrors(
     requireProtocol(obj, TYPES.BOARD_INDEX),
-    requireString(obj, 'boardId'),
+    requireBytes32(obj, 'boardId'),
     requireString(obj, 'curator'),
     requireNumber(obj, 'updatedAt'),
     requireArray(obj, 'entries'),
@@ -384,7 +402,7 @@ export function validateGlobalIndex(obj) {
   );
   if (Array.isArray(obj.entries)) {
     errors.push(...(validateEntries(obj.entries, [
-      { name: 'boardId', type: 'string' },
+      { name: 'boardId', type: 'bytes32' },
       { name: 'submissionId', bzz: true },
       { name: 'submissionRef', bzz: true },
     ], 'entries') || []));
@@ -412,7 +430,7 @@ const VALIDATORS = {
   [TYPES.POST]: validatePost,
   [TYPES.REPLY]: validateReply,
   [TYPES.SUBMISSION]: validateSubmission,
-  [TYPES.USER_FEED]: validateUserFeedIndex,
+  [TYPES.USER_FEED_ENTRY]: validateUserFeedEntry,
   [TYPES.BOARD_INDEX]: validateBoardIndex,
   [TYPES.THREAD_INDEX]: validateThreadIndex,
   [TYPES.GLOBAL_INDEX]: validateGlobalIndex,

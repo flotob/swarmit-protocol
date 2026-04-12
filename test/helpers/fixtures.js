@@ -3,6 +3,9 @@
  */
 
 import { TYPES } from '../../src/objects/constants.js';
+import { slugToBoardId } from '../../src/references.js';
+
+export const GENERAL_BOARD_ID = slugToBoardId('general');
 
 // --- Valid hex references (64-char) ---
 export const VALID_HEX = 'a'.repeat(64);
@@ -28,7 +31,6 @@ export const VALID_ADDRESS_2 = '0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF';
 // --- Composite helpers ---
 export const validAuthor = () => ({
   address: VALID_ADDRESS,
-  userFeed: VALID_BZZ,
 });
 
 export const validBody = () => ({
@@ -43,7 +45,7 @@ export const BOARD_SLUGS = new Set(['general', 'tech', 'random']);
 
 export const validBoard = () => ({
   protocol: TYPES.BOARD,
-  boardId: 'general',
+  boardId: GENERAL_BOARD_ID,
   slug: 'general',
   title: 'General Discussion',
   description: 'A board for general topics',
@@ -68,7 +70,7 @@ export const validReply = () => ({
 
 export const validSubmissionPost = () => ({
   protocol: TYPES.SUBMISSION,
-  boardId: 'general',
+  boardId: GENERAL_BOARD_ID,
   kind: 'post',
   contentRef: VALID_BZZ,
   author: validAuthor(),
@@ -77,7 +79,7 @@ export const validSubmissionPost = () => ({
 
 export const validSubmissionReply = () => ({
   protocol: TYPES.SUBMISSION,
-  boardId: 'general',
+  boardId: GENERAL_BOARD_ID,
   kind: 'reply',
   contentRef: VALID_BZZ,
   author: validAuthor(),
@@ -86,16 +88,17 @@ export const validSubmissionReply = () => ({
   createdAt: Date.now(),
 });
 
-export const validUserFeedIndex = () => ({
-  protocol: TYPES.USER_FEED,
-  author: VALID_ADDRESS,
-  updatedAt: Date.now(),
-  entries: [],
+export const validUserFeedEntry = () => ({
+  protocol: TYPES.USER_FEED_ENTRY,
+  submissionRef: VALID_BZZ,
+  boardSlug: 'general',
+  kind: 'post',
+  createdAt: Date.now(),
 });
 
 export const validBoardIndex = () => ({
   protocol: TYPES.BOARD_INDEX,
-  boardId: 'general',
+  boardId: GENERAL_BOARD_ID,
   curator: VALID_ADDRESS,
   updatedAt: Date.now(),
   entries: [],

@@ -5,14 +5,19 @@
  */
 
 import { TYPES } from './constants.js';
+import { slugToBoardId } from '../references.js';
+import { isValidBoardSlug } from '../slugs.js';
 
 /**
  * Build a board object.
  */
-export function buildBoard({ boardId, slug, title, description, governance, rulesRef, endorsedCurators, defaultCurator, metadata }) {
+export function buildBoard({ slug, title, description, governance, rulesRef, endorsedCurators, defaultCurator, metadata }) {
+  if (!isValidBoardSlug(slug)) {
+    throw new Error(`invalid board slug: "${slug}"`);
+  }
   const obj = {
     protocol: TYPES.BOARD,
-    boardId: boardId || slug,
+    boardId: slugToBoardId(slug),
     slug,
     title,
     description,
@@ -77,14 +82,16 @@ export function buildSubmission({ boardId, kind, contentRef, author, parentSubmi
 }
 
 /**
- * Build a userFeedIndex object.
+ * Build a userFeedEntry object — a single journal entry for the user's
+ * activity feed. Written as an individual SOC via writeFeedEntry.
  */
-export function buildUserFeedIndex({ author, entries }) {
+export function buildUserFeedEntry({ submissionRef, boardSlug, kind }) {
   return {
-    protocol: TYPES.USER_FEED,
-    author,
-    updatedAt: Date.now(),
-    entries: entries || [],
+    protocol: TYPES.USER_FEED_ENTRY,
+    submissionRef,
+    boardSlug,
+    kind,
+    createdAt: Date.now(),
   };
 }
 

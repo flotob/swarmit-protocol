@@ -5,21 +5,22 @@ import {
   RECOMMENDED_VIEW_NAMES, RECOMMENDED_RANKED_VIEW_NAMES,
   CURATOR_PROFILE_FEED_NAME,
   buildBoard, buildPost, buildReply, buildSubmission,
-  buildUserFeedIndex, buildBoardIndex, buildThreadIndex,
+  buildUserFeedEntry, buildBoardIndex, buildThreadIndex,
   buildGlobalIndex, buildCuratorProfile,
   validateBoard, validatePost, validateReply, validateSubmission,
-  validateUserFeedIndex, validateBoardIndex, validateThreadIndex,
+  validateUserFeedEntry, validateBoardIndex, validateThreadIndex,
   validateGlobalIndex, validateCuratorProfile,
   validate,
 } from '../../src/index.js';
 import {
   VALID_HEX, VALID_BZZ, VALID_BZZ_2, VALID_BZZ_3,
-  VALID_ADDRESS, validAuthor, validBody,
+  VALID_ADDRESS, GENERAL_BOARD_ID, validAuthor, validBody,
   validBoard, validPost, validReply,
   validSubmissionPost, validSubmissionReply,
-  validUserFeedIndex, validBoardIndex, validThreadIndex,
+  validUserFeedEntry, validBoardIndex, validThreadIndex,
   validGlobalIndex, validCuratorProfile,
 } from '../helpers/fixtures.js';
+import { slugToBoardId } from '../../src/references.js';
 
 // ===========================================
 // Recommended view names
@@ -67,14 +68,16 @@ describe('buildBoard', () => {
     assert.equal(board.protocol, TYPES.BOARD);
   });
 
-  it('defaults boardId to slug', () => {
+  it('derives boardId from slug as keccak256 hash', () => {
     const board = buildBoard({ slug: 'gen', title: 'Gen', description: 'd', governance: {} });
-    assert.equal(board.boardId, 'gen');
+    assert.equal(board.boardId, slugToBoardId('gen'));
   });
 
-  it('accepts explicit boardId', () => {
-    const board = buildBoard({ boardId: 'custom', slug: 'gen', title: 'Gen', description: 'd', governance: {} });
-    assert.equal(board.boardId, 'custom');
+  it('throws on invalid slug', () => {
+    assert.throws(
+      () => buildBoard({ slug: 'NOT VALID', title: 'T', description: 'd', governance: {} }),
+      /invalid board slug/,
+    );
   });
 
   it('sets createdAt to a recent timestamp', () => {
@@ -135,15 +138,15 @@ describe('buildSubmission', () => {
   });
 });
 
-describe('buildUserFeedIndex', () => {
-  it('defaults entries to empty array', () => {
-    const ufi = buildUserFeedIndex({ author: VALID_ADDRESS });
-    assert.deepEqual(ufi.entries, []);
+describe('buildUserFeedEntry', () => {
+  it('produces correct protocol field', () => {
+    const entry = buildUserFeedEntry({ submissionRef: VALID_BZZ, boardSlug: 'gen', kind: 'post' });
+    assert.equal(entry.protocol, TYPES.USER_FEED_ENTRY);
   });
 
-  it('sets updatedAt', () => {
-    const ufi = buildUserFeedIndex({ author: VALID_ADDRESS });
-    assert.equal(typeof ufi.updatedAt, 'number');
+  it('sets createdAt', () => {
+    const entry = buildUserFeedEntry({ submissionRef: VALID_BZZ, boardSlug: 'gen', kind: 'post' });
+    assert.equal(typeof entry.createdAt, 'number');
   });
 });
 
@@ -202,8 +205,8 @@ describe('validators pass for valid fixtures', () => {
     assert.deepEqual(validateSubmission(validSubmissionReply()), []);
   });
 
-  it('validateUserFeedIndex', () => {
-    assert.deepEqual(validateUserFeedIndex(validUserFeedIndex()), []);
+  it('validateUserFeedEntry', () => {
+    assert.deepEqual(validateUserFeedEntry(validUserFeedEntry()), []);
   });
 
   it('validateBoardIndex', () => {
@@ -355,23 +358,41 @@ describe('validateSubmission specifics', () => {
 // Index validators — nested entry checks
 // ===========================================
 
-describe('validateUserFeedIndex entries', () => {
-  it('rejects entries missing submissionId', () => {
-    const ufi = {
-      ...validUserFeedIndex(),
-      entries: [{ submissionRef: VALID_BZZ, boardId: 'gen', kind: 'post', createdAt: 1 }],
-    };
-    const errors = validateUserFeedIndex(ufi);
-    assert.ok(errors.some(e => e.includes('submissionId')));
+describe('validateUserFeedEntry specifics', () => {
+  it('rejects missing submissionRef', () => {
+    const entry = { ...validUserFeedEntry(), submissionRef: undefined };
+    const errors = validateUserFeedEntry(entry);
+    assert.ok(errors.some(e => e.includes('submissionRef')));
   });
 
-  it('rejects entries with bare hex submissionId', () => {
-    const ufi = {
-      ...validUserFeedIndex(),
-      entries: [{ submissionId: VALID_HEX, submissionRef: VALID_BZZ, boardId: 'gen', kind: 'post', createdAt: 1 }],
-    };
-    const errors = validateUserFeedIndex(ufi);
-    assert.ok(errors.some(e => e.includes('submissionId')));
+  it('rejects bare hex submissionRef', () => {
+    const entry = { ...validUserFeedEntry(), submissionRef: VALID_HEX };
+    const errors = validateUserFeedEntry(entry);
+    assert.ok(errors.some(e => e.includes('submissionRef')));
+  });
+
+  it('rejects missing boardSlug', () => {
+    const entry = { ...validUserFeedEntry(), boardSlug: undefined };
+    const errors = validateUserFeedEntry(entry);
+    assert.ok(errors.some(e => e.includes('boardSlug')));
+  });
+
+  it('rejects missing kind', () => {
+    const entry = { ...validUserFeedEntry(), kind: undefined };
+    const errors = validateUserFeedEntry(entry);
+    assert.ok(errors.some(e => e.includes('kind')));
+  });
+
+  it('rejects non-canonical boardSlug', () => {
+    const entry = { ...validUserFeedEntry(), boardSlug: 'NOT VALID' };
+    const errors = validateUserFeedEntry(entry);
+    assert.ok(errors.some(e => e.includes('canonical board slug')));
+  });
+
+  it('rejects invalid kind value', () => {
+    const entry = { ...validUserFeedEntry(), kind: 'garbage' };
+    const errors = validateUserFeedEntry(entry);
+    assert.ok(errors.some(e => e.includes('kind must be')));
   });
 });
 
