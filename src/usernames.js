@@ -14,10 +14,7 @@
  */
 
 import { id } from 'ethers';
-
-const MIN_LENGTH = 3;
-const MAX_LENGTH = 24;
-const INVALID_CHAR = /[^a-z0-9-]/;
+import { validateAsciiIdentifier } from './_validation.js';
 
 /**
  * Trim whitespace and lowercase a raw user input string.
@@ -39,36 +36,7 @@ export function normalizeUsernameInput(raw) {
  * @returns {string[]}
  */
 export function validateUsername(name) {
-  const errors = [];
-
-  if (typeof name !== 'string') {
-    errors.push('username must be a string');
-    return errors;
-  }
-
-  if (name.length < MIN_LENGTH) {
-    errors.push(`username must be at least ${MIN_LENGTH} characters`);
-  }
-  if (name.length > MAX_LENGTH) {
-    errors.push(`username must be at most ${MAX_LENGTH} characters`);
-  }
-
-  const badChar = name.match(INVALID_CHAR);
-  if (badChar) {
-    errors.push(`invalid character '${badChar[0]}' at position ${badChar.index}`);
-  }
-
-  if (name.startsWith('-')) {
-    errors.push('username must not start with a hyphen');
-  }
-  if (name.endsWith('-')) {
-    errors.push('username must not end with a hyphen');
-  }
-  if (name.includes('--')) {
-    errors.push('username must not contain consecutive hyphens');
-  }
-
-  return errors;
+  return validateAsciiIdentifier(name, 3, 24, 'username');
 }
 
 /**
