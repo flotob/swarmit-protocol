@@ -218,4 +218,18 @@ describe('slugToBoardId', () => {
   it('rejects non-canonical slug (leading hyphen)', () => {
     assert.throws(() => slugToBoardId('-tech'), /invalid canonical slug/);
   });
+
+  it('rejects non-canonical slug (trailing hyphen)', () => {
+    assert.throws(() => slugToBoardId('tech-'), /invalid canonical slug/);
+  });
+
+  it('rejects too-long slug (33 chars)', () => {
+    assert.throws(() => slugToBoardId('a'.repeat(33)), /invalid canonical slug/);
+  });
+
+  it('accepts single-char slug', () => {
+    const id = slugToBoardId('x');
+    assert.ok(id.startsWith('0x'));
+    assert.equal(id.length, 66);
+  });
 });

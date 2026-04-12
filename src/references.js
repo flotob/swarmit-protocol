@@ -5,6 +5,7 @@
  */
 
 import { id } from 'ethers';
+import { validateAsciiIdentifier } from './_validation.js';
 
 const HEX_64_RE = /^[0-9a-f]{64}$/i;
 const HEX_64_LOWER_RE = /^[0-9a-f]{64}$/;
@@ -110,10 +111,8 @@ export function bytes32ToRef(b32) {
  */
 export function slugToBoardId(slug) {
   if (!slug || typeof slug !== 'string') throw new Error('Board slug is required');
-  // Inline the canonical check to avoid a circular dependency with slugs.js
-  // (slugs.js imports _validation.js; references.js is imported by slugs.js consumers).
-  // Rules: 1..32 chars, a-z 0-9 -, no leading/trailing/consecutive hyphens.
-  if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(slug) || slug.length > 32 || slug.includes('--')) {
+  const errors = validateAsciiIdentifier(slug, 1, 32, 'board slug');
+  if (errors.length > 0) {
     throw new Error(`slugToBoardId: invalid canonical slug "${slug}"`);
   }
   return id(slug);
