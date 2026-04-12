@@ -130,6 +130,14 @@ describe('encode.updateBoardMetadata', () => {
     assert.equal(decoded[0], slugToBoardId('hn'));
     assert.equal(decoded[1], VALID_BZZ_2);
   });
+
+  it('golden calldata', () => {
+    const data = encode.updateBoardMetadata({ slug: 'hn', boardRef: VALID_BZZ_2 });
+    assert.equal(
+      data,
+      '0xa66793910241bebcd5d333997c1611a0bf9402e24142afba67be970ed274a2d0333e293c00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000046627a7a3a2f2f626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262620000000000000000000000000000000000000000000000000000',
+    );
+  });
 });
 
 // ===========================================
@@ -150,6 +158,17 @@ describe('encode.announceSubmission — top-level post', () => {
     assert.equal(parent, BYTES32_ZERO);
     assert.equal(root, submissionId, 'root must equal submissionId for top-level posts');
   });
+
+  it('golden calldata', () => {
+    const data = encode.announceSubmission({
+      boardSlug: 'hn', submissionRef: VALID_BZZ,
+      parentSubmissionRef: null, rootSubmissionRef: null,
+    });
+    assert.equal(
+      data,
+      '0xdd618a8c0241bebcd5d333997c1611a0bf9402e24142afba67be970ed274a2d0333e293caaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000000000000000000000000000000000000000000000000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    );
+  });
 });
 
 describe('encode.announceSubmission — reply', () => {
@@ -164,6 +183,17 @@ describe('encode.announceSubmission — reply', () => {
     assert.equal(submissionId, refToBytes32(VALID_BZZ));
     assert.equal(parent, refToBytes32(VALID_BZZ_2));
     assert.equal(root, refToBytes32(VALID_BZZ_3));
+  });
+
+  it('golden calldata', () => {
+    const data = encode.announceSubmission({
+      boardSlug: 'hn', submissionRef: VALID_BZZ,
+      parentSubmissionRef: VALID_BZZ_2, rootSubmissionRef: VALID_BZZ_3,
+    });
+    assert.equal(
+      data,
+      '0xdd618a8c0241bebcd5d333997c1611a0bf9402e24142afba67be970ed274a2d0333e293caaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+    );
   });
 });
 
@@ -211,6 +241,14 @@ describe('encode.setVote', () => {
     assert.equal(Number(direction), -1);
   });
 
+  it('golden calldata (upvote)', () => {
+    const data = encode.setVote({ submissionRef: VALID_BZZ, direction: 1 });
+    assert.equal(
+      data,
+      '0xfa1f1d9caaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000000000000000000000000000000000000000000000000000000001',
+    );
+  });
+
   it('throws on direction=2', () => {
     assert.throws(() => encode.setVote({ submissionRef: VALID_BZZ, direction: 2 }));
   });
@@ -233,6 +271,14 @@ describe('encode.declareCurator', () => {
 
   it('throws on missing arg', () => {
     assert.throws(() => encode.declareCurator({}));
+  });
+
+  it('golden calldata', () => {
+    const data = encode.declareCurator({ curatorProfileRef: VALID_BZZ });
+    assert.equal(
+      data,
+      '0x943d390700000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000046627a7a3a2f2f616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161610000000000000000000000000000000000000000000000000000',
+    );
   });
 });
 
