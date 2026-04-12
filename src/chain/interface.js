@@ -14,6 +14,8 @@ export const TOPICS = {
   SubmissionAnnounced: iface.getEvent('SubmissionAnnounced').topicHash,
   CuratorDeclared: iface.getEvent('CuratorDeclared').topicHash,
   VoteSet: iface.getEvent('VoteSet').topicHash,
+  UserFeedDeclared: iface.getEvent('UserFeedDeclared').topicHash,
+  UserFeedRevoked: iface.getEvent('UserFeedRevoked').topicHash,
 };
 
 export { ZeroHash as BYTES32_ZERO };

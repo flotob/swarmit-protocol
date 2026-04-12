@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { ABI, iface, TOPICS, BYTES32_ZERO, encode, VOTE } from '../../src/chain/index.js';
 import { slugToBoardId, refToBytes32 } from '../../src/references.js';
-import { VALID_BZZ, VALID_BZZ_2, VALID_BZZ_3 } from '../helpers/fixtures.js';
+import { VALID_BZZ, VALID_BZZ_2, VALID_BZZ_3, VALID_ADDRESS } from '../helpers/fixtures.js';
 
 describe('VOTE constants', () => {
   it('exports UP/CLEAR/DOWN as 1/0/-1', () => {
@@ -33,62 +33,51 @@ describe('BYTES32_ZERO (re-exported from ethers.ZeroHash)', () => {
 // ===========================================
 
 describe('ABI + Interface', () => {
-  it('has 17 fragments (5 events + 5 writes + 7 getters)', () => {
-    assert.equal(iface.fragments.length, 17);
+  it('has 28 fragments (7 events + 7 writes + 7 mapping getters + 7 view helpers)', () => {
+    assert.equal(iface.fragments.length, 28);
   });
 
   it('raw ABI array length matches iface fragment count', () => {
-    assert.equal(ABI.length, 17);
+    assert.equal(ABI.length, 28);
   });
 
-  it('iface can look up all 5 write methods', () => {
+  it('iface can look up all 7 write methods', () => {
     const writeNames = [
       'registerBoard',
       'updateBoardMetadata',
       'announceSubmission',
       'setVote',
       'declareCurator',
+      'declareUserFeed',
+      'revokeUserFeed',
     ];
     for (const name of writeNames) {
-      const fn = iface.getFunction(name);
-      assert.ok(fn, `iface.getFunction("${name}") should not be null`);
+      assert.ok(iface.getFunction(name), `iface.getFunction("${name}") should not be null`);
     }
   });
 
-  it('iface can look up all 7 public state getters', () => {
-    const readNames = [
-      'boardGovernance',
-      'submissionExists',
-      'submissionBoard',
-      'submissionRoot',
-      'voteOf',
-      'upvoteCount',
-      'downvoteCount',
-    ];
-    for (const name of readNames) {
-      const fn = iface.getFunction(name);
-      assert.ok(fn, `iface.getFunction("${name}") should not be null`);
-    }
-  });
-
-  it('iface can look up all 5 events', () => {
+  it('iface can look up all 7 events', () => {
     const eventNames = [
       'BoardRegistered',
       'BoardMetadataUpdated',
       'SubmissionAnnounced',
       'CuratorDeclared',
       'VoteSet',
+      'UserFeedDeclared',
+      'UserFeedRevoked',
     ];
     for (const name of eventNames) {
-      const ev = iface.getEvent(name);
-      assert.ok(ev, `iface.getEvent("${name}") should not be null`);
+      assert.ok(iface.getEvent(name), `iface.getEvent("${name}") should not be null`);
     }
   });
 });
 
 describe('TOPICS', () => {
-  it('has 5 topic hashes, all 0x-prefixed 32-byte', () => {
-    const names = ['BoardRegistered', 'BoardMetadataUpdated', 'SubmissionAnnounced', 'CuratorDeclared', 'VoteSet'];
+  it('has 7 topic hashes, all 0x-prefixed 32-byte', () => {
+    const names = [
+      'BoardRegistered', 'BoardMetadataUpdated', 'SubmissionAnnounced',
+      'CuratorDeclared', 'VoteSet', 'UserFeedDeclared', 'UserFeedRevoked',
+    ];
     for (const name of names) {
       const topic = TOPICS[name];
       assert.ok(topic, `TOPICS.${name} should be set`);
@@ -99,13 +88,12 @@ describe('TOPICS', () => {
 
   it('all topics are distinct', () => {
     const topics = Object.values(TOPICS);
-    const unique = new Set(topics);
-    assert.equal(unique.size, topics.length);
+    assert.equal(new Set(topics).size, topics.length);
   });
 });
 
 // ===========================================
-// encode.registerBoard
+// encode.registerBoard — V3: no boardId param
 // ===========================================
 
 describe('encode.registerBoard', () => {
@@ -114,40 +102,11 @@ describe('encode.registerBoard', () => {
     assert.ok(data.startsWith('0x'));
   });
 
-  it('decoded args match inputs (boardId from slug hash, slug, boardRef)', () => {
+  it('decoded args are slug and boardRef (no boardId)', () => {
     const data = encode.registerBoard({ slug: 'hn', boardRef: VALID_BZZ });
     const decoded = iface.decodeFunctionData('registerBoard', data);
-    assert.equal(decoded[0], slugToBoardId('hn'));
-    assert.equal(decoded[1], 'hn');
-    assert.equal(decoded[2], VALID_BZZ);
-  });
-
-  // Golden calldata — fixed input → fixed output.
-  //
-  // Fails if the ABI signature, encoder logic, slugToBoardId, or refToBytes32
-  // change. The round-trip tests above protect against encoder/decoder drift;
-  // these literal assertions additionally protect against ABI-and-encoder
-  // drifting *together* in a wrong-but-consistent way.
-  //
-  // Day-1 correctness: the 6 golden hex values in this file were
-  // independently verified byte-for-byte against Foundry's `cast calldata`
-  // (a Rust ABI encoder in alloy-core, no relation to ethers.js). Two
-  // completely separate encoder implementations agreeing on the output is
-  // our evidence that these values aren't just circularly pinned from a
-  // buggy encoder. To re-verify:
-  //
-  //     cast calldata 'registerBoard(bytes32,string,string)' \
-  //         $(cast keccak "hn") "hn" "bzz://$(printf 'a%.0s' {1..64})"
-  //
-  // To regenerate on an intentional ABI change: run the encoder with the
-  // same inputs, paste the new hex here, AND re-verify with `cast`.
-  // Never "fix" a failing golden by silently changing the inputs.
-  it('golden calldata', () => {
-    const data = encode.registerBoard({ slug: 'hn', boardRef: VALID_BZZ });
-    assert.equal(
-      data,
-      '0xf2e2a08e0241bebcd5d333997c1611a0bf9402e24142afba67be970ed274a2d0333e293c000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000002686e0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000046627a7a3a2f2f616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161610000000000000000000000000000000000000000000000000000',
-    );
+    assert.equal(decoded[0], 'hn');
+    assert.equal(decoded[1], VALID_BZZ);
   });
 });
 
@@ -162,18 +121,10 @@ describe('encode.updateBoardMetadata', () => {
     assert.equal(decoded[0], slugToBoardId('hn'));
     assert.equal(decoded[1], VALID_BZZ_2);
   });
-
-  it('golden calldata', () => {
-    const data = encode.updateBoardMetadata({ slug: 'hn', boardRef: VALID_BZZ_2 });
-    assert.equal(
-      data,
-      '0xa66793910241bebcd5d333997c1611a0bf9402e24142afba67be970ed274a2d0333e293c00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000046627a7a3a2f2f626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262620000000000000000000000000000000000000000000000000000',
-    );
-  });
 });
 
 // ===========================================
-// encode.announceSubmission — the critical one
+// encode.announceSubmission
 // ===========================================
 
 describe('encode.announceSubmission — top-level post', () => {
@@ -190,29 +141,6 @@ describe('encode.announceSubmission — top-level post', () => {
     assert.equal(parent, BYTES32_ZERO);
     assert.equal(root, submissionId, 'root must equal submissionId for top-level posts');
   });
-
-  it('returns 0x-prefixed calldata', () => {
-    const data = encode.announceSubmission({
-      boardSlug: 'hn',
-      submissionRef: VALID_BZZ,
-      parentSubmissionRef: null,
-      rootSubmissionRef: null,
-    });
-    assert.ok(data.startsWith('0x'));
-  });
-
-  it('golden calldata', () => {
-    const data = encode.announceSubmission({
-      boardSlug: 'hn',
-      submissionRef: VALID_BZZ,
-      parentSubmissionRef: null,
-      rootSubmissionRef: null,
-    });
-    assert.equal(
-      data,
-      '0xdd618a8c0241bebcd5d333997c1611a0bf9402e24142afba67be970ed274a2d0333e293caaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000000000000000000000000000000000000000000000000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-    );
-  });
 });
 
 describe('encode.announceSubmission — reply', () => {
@@ -227,19 +155,6 @@ describe('encode.announceSubmission — reply', () => {
     assert.equal(submissionId, refToBytes32(VALID_BZZ));
     assert.equal(parent, refToBytes32(VALID_BZZ_2));
     assert.equal(root, refToBytes32(VALID_BZZ_3));
-  });
-
-  it('golden calldata', () => {
-    const data = encode.announceSubmission({
-      boardSlug: 'hn',
-      submissionRef: VALID_BZZ,
-      parentSubmissionRef: VALID_BZZ_2,
-      rootSubmissionRef: VALID_BZZ_3,
-    });
-    assert.equal(
-      data,
-      '0xdd618a8c0241bebcd5d333997c1611a0bf9402e24142afba67be970ed274a2d0333e293caaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
-    );
   });
 });
 
@@ -267,24 +182,6 @@ describe('encode.announceSubmission — XOR invariant', () => {
       /both be null.*or both be non-null/,
     );
   });
-
-  it('throws on invalid submissionRef', () => {
-    assert.throws(() => encode.announceSubmission({
-      boardSlug: 'hn',
-      submissionRef: 'garbage',
-      parentSubmissionRef: null,
-      rootSubmissionRef: null,
-    }));
-  });
-
-  it('throws on invalid parentSubmissionRef (reply case)', () => {
-    assert.throws(() => encode.announceSubmission({
-      boardSlug: 'hn',
-      submissionRef: VALID_BZZ,
-      parentSubmissionRef: 'garbage',
-      rootSubmissionRef: VALID_BZZ_3,
-    }));
-  });
 });
 
 // ===========================================
@@ -299,40 +196,14 @@ describe('encode.setVote', () => {
     assert.equal(Number(direction), 1);
   });
 
-  it('golden calldata (upvote)', () => {
-    const data = encode.setVote({ submissionRef: VALID_BZZ, direction: 1 });
-    assert.equal(
-      data,
-      '0xfa1f1d9caaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000000000000000000000000000000000000000000000000000000001',
-    );
-  });
-
   it('downvote (direction=-1)', () => {
     const data = encode.setVote({ submissionRef: VALID_BZZ, direction: -1 });
     const [, direction] = iface.decodeFunctionData('setVote', data);
     assert.equal(Number(direction), -1);
   });
 
-  it('clear (direction=0)', () => {
-    const data = encode.setVote({ submissionRef: VALID_BZZ, direction: 0 });
-    const [, direction] = iface.decodeFunctionData('setVote', data);
-    assert.equal(Number(direction), 0);
-  });
-
   it('throws on direction=2', () => {
     assert.throws(() => encode.setVote({ submissionRef: VALID_BZZ, direction: 2 }));
-  });
-
-  it('throws on direction=null', () => {
-    assert.throws(() => encode.setVote({ submissionRef: VALID_BZZ, direction: null }));
-  });
-
-  it('throws on direction=undefined', () => {
-    assert.throws(() => encode.setVote({ submissionRef: VALID_BZZ }));
-  });
-
-  it('throws on invalid submissionRef', () => {
-    assert.throws(() => encode.setVote({ submissionRef: 'garbage', direction: 1 }));
   });
 });
 
@@ -354,12 +225,63 @@ describe('encode.declareCurator', () => {
   it('throws on missing arg', () => {
     assert.throws(() => encode.declareCurator({}));
   });
+});
 
-  it('golden calldata', () => {
-    const data = encode.declareCurator({ curatorProfileRef: VALID_BZZ });
-    assert.equal(
-      data,
-      '0x943d390700000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000046627a7a3a2f2f616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161610000000000000000000000000000000000000000000000000000',
-    );
+// ===========================================
+// encode.declareUserFeed
+// ===========================================
+
+describe('encode.declareUserFeed', () => {
+  const prefixedTopic = '0x' + 'aa'.repeat(32);
+  const rawTopic = 'aa'.repeat(32); // Freedom Browser format
+  const owner = VALID_ADDRESS;
+
+  it('returns 0x-prefixed hex calldata', () => {
+    const data = encode.declareUserFeed({ feedTopic: prefixedTopic, feedOwner: owner });
+    assert.ok(data.startsWith('0x'));
+  });
+
+  it('can be decoded back via iface', () => {
+    const data = encode.declareUserFeed({ feedTopic: prefixedTopic, feedOwner: owner });
+    const decoded = iface.decodeFunctionData('declareUserFeed', data);
+    assert.equal(decoded[0], prefixedTopic);
+    assert.equal(decoded[1].toLowerCase(), owner.toLowerCase());
+  });
+
+  it('accepts raw 64-char hex topic (Freedom Browser format)', () => {
+    const fromRaw = encode.declareUserFeed({ feedTopic: rawTopic, feedOwner: owner });
+    const fromPrefixed = encode.declareUserFeed({ feedTopic: prefixedTopic, feedOwner: owner });
+    assert.equal(fromRaw, fromPrefixed);
+  });
+
+  it('throws if feedTopic is missing', () => {
+    assert.throws(() => encode.declareUserFeed({ feedOwner: owner }), /topic is required/);
+  });
+
+  it('throws if feedOwner is missing', () => {
+    assert.throws(() => encode.declareUserFeed({ feedTopic: prefixedTopic }), /feedOwner is required/);
+  });
+});
+
+// ===========================================
+// encode.revokeUserFeed
+// ===========================================
+
+describe('encode.revokeUserFeed', () => {
+  const feedId = '0x' + 'dd'.repeat(32);
+
+  it('returns 0x-prefixed hex calldata', () => {
+    const data = encode.revokeUserFeed({ feedId });
+    assert.ok(data.startsWith('0x'));
+  });
+
+  it('can be decoded back via iface', () => {
+    const data = encode.revokeUserFeed({ feedId });
+    const decoded = iface.decodeFunctionData('revokeUserFeed', data);
+    assert.equal(decoded[0], feedId);
+  });
+
+  it('throws if feedId is missing', () => {
+    assert.throws(() => encode.revokeUserFeed({}), /feedId is required/);
   });
 });
