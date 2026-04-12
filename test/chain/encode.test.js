@@ -108,6 +108,15 @@ describe('encode.registerBoard', () => {
     assert.equal(decoded[0], 'hn');
     assert.equal(decoded[1], VALID_BZZ);
   });
+
+  // Golden calldata verified against `cast calldata 'registerBoard(string,string)' 'hn' 'bzz://aaa...a'`
+  it('golden calldata', () => {
+    const data = encode.registerBoard({ slug: 'hn', boardRef: VALID_BZZ });
+    assert.equal(
+      data,
+      '0x64874b98000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000002686e0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000046627a7a3a2f2f616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161610000000000000000000000000000000000000000000000000000',
+    );
+  });
 });
 
 // ===========================================
@@ -254,6 +263,15 @@ describe('encode.declareUserFeed', () => {
     assert.equal(fromRaw, fromPrefixed);
   });
 
+  // Golden calldata verified against `cast calldata 'declareUserFeed(bytes32,address)' 0xaa...aa 0x7E5F...`
+  it('golden calldata', () => {
+    const data = encode.declareUserFeed({ feedTopic: prefixedTopic, feedOwner: owner });
+    assert.equal(
+      data,
+      '0x79e80d8faaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000000000000000007e5f4552091a69125d5dfcb7b8c2659029395bdf',
+    );
+  });
+
   it('throws if feedTopic is missing', () => {
     assert.throws(() => encode.declareUserFeed({ feedOwner: owner }), /topic is required/);
   });
@@ -279,6 +297,15 @@ describe('encode.revokeUserFeed', () => {
     const data = encode.revokeUserFeed({ feedId });
     const decoded = iface.decodeFunctionData('revokeUserFeed', data);
     assert.equal(decoded[0], feedId);
+  });
+
+  // Golden calldata verified against `cast calldata 'revokeUserFeed(bytes32)' 0xdd...dd`
+  it('golden calldata', () => {
+    const data = encode.revokeUserFeed({ feedId });
+    assert.equal(
+      data,
+      '0x74cbc378dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
+    );
   });
 
   it('throws if feedId is missing', () => {

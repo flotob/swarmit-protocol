@@ -206,4 +206,16 @@ describe('slugToBoardId', () => {
   it('null throws', () => {
     assert.throws(() => slugToBoardId(null));
   });
+
+  it('rejects non-canonical slug (uppercase)', () => {
+    assert.throws(() => slugToBoardId('Tech'), /invalid canonical slug/);
+  });
+
+  it('rejects non-canonical slug (consecutive hyphens)', () => {
+    assert.throws(() => slugToBoardId('my--board'), /invalid canonical slug/);
+  });
+
+  it('rejects non-canonical slug (leading hyphen)', () => {
+    assert.throws(() => slugToBoardId('-tech'), /invalid canonical slug/);
+  });
 });

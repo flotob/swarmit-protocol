@@ -102,12 +102,19 @@ export function bytes32ToRef(b32) {
 }
 
 /**
- * Derive on-chain boardId from a human-readable slug.
- * boardId = keccak256(bytes(slug)) — matches the contract invariant at SwarmitRegistryV2.sol:78.
- * @param {string} slug
+ * Derive on-chain boardId from a canonical board slug.
+ * boardId = keccak256(bytes(slug)) — matches the V3 contract.
+ * Rejects non-canonical slugs to prevent hash mismatches.
+ * @param {string} slug - canonical lowercase board slug
  * @returns {string} 0x-prefixed bytes32
  */
 export function slugToBoardId(slug) {
   if (!slug || typeof slug !== 'string') throw new Error('Board slug is required');
+  // Inline the canonical check to avoid a circular dependency with slugs.js
+  // (slugs.js imports _validation.js; references.js is imported by slugs.js consumers).
+  // Rules: 1..32 chars, a-z 0-9 -, no leading/trailing/consecutive hyphens.
+  if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(slug) || slug.length > 32 || slug.includes('--')) {
+    throw new Error(`slugToBoardId: invalid canonical slug "${slug}"`);
+  }
   return id(slug);
 }
