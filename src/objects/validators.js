@@ -403,9 +403,20 @@ export function validateGlobalIndex(obj) {
   if (Array.isArray(obj.entries)) {
     errors.push(...(validateEntries(obj.entries, [
       { name: 'boardId', type: 'bytes32' },
+      { name: 'boardSlug', type: 'string' },
       { name: 'submissionId', bzz: true },
       { name: 'submissionRef', bzz: true },
     ], 'entries') || []));
+    for (let i = 0; i < obj.entries.length; i++) {
+      const entry = obj.entries[i];
+      if (entry && typeof entry === 'object' && entry.boardSlug && typeof entry.boardSlug === 'string') {
+        if (!isValidBoardSlug(entry.boardSlug)) {
+          errors.push(`entries[${i}].boardSlug must be a canonical board slug`);
+        } else if (entry.boardId && entry.boardId !== slugToBoardId(entry.boardSlug)) {
+          errors.push(`entries[${i}].boardId must equal keccak256(bytes(boardSlug))`);
+        }
+      }
+    }
   }
   return errors;
 }

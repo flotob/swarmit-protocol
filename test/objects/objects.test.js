@@ -428,13 +428,49 @@ describe('validateThreadIndex nodes', () => {
 });
 
 describe('validateGlobalIndex entries', () => {
+  it('accepts valid entry with boardId + boardSlug', () => {
+    const gi = {
+      ...validGlobalIndex(),
+      entries: [{ boardId: GENERAL_BOARD_ID, boardSlug: 'general', submissionId: VALID_BZZ, submissionRef: VALID_BZZ }],
+    };
+    const errors = validateGlobalIndex(gi);
+    assert.deepEqual(errors, []);
+  });
+
   it('rejects entries missing boardId', () => {
     const gi = {
       ...validGlobalIndex(),
-      entries: [{ submissionId: VALID_BZZ, submissionRef: VALID_BZZ }],
+      entries: [{ boardSlug: 'general', submissionId: VALID_BZZ, submissionRef: VALID_BZZ }],
     };
     const errors = validateGlobalIndex(gi);
     assert.ok(errors.some(e => e.includes('boardId')));
+  });
+
+  it('rejects entries missing boardSlug', () => {
+    const gi = {
+      ...validGlobalIndex(),
+      entries: [{ boardId: GENERAL_BOARD_ID, submissionId: VALID_BZZ, submissionRef: VALID_BZZ }],
+    };
+    const errors = validateGlobalIndex(gi);
+    assert.ok(errors.some(e => e.includes('boardSlug')));
+  });
+
+  it('rejects non-canonical boardSlug', () => {
+    const gi = {
+      ...validGlobalIndex(),
+      entries: [{ boardId: GENERAL_BOARD_ID, boardSlug: 'GENERAL', submissionId: VALID_BZZ, submissionRef: VALID_BZZ }],
+    };
+    const errors = validateGlobalIndex(gi);
+    assert.ok(errors.some(e => e.includes('canonical board slug')));
+  });
+
+  it('rejects boardId/boardSlug mismatch', () => {
+    const gi = {
+      ...validGlobalIndex(),
+      entries: [{ boardId: GENERAL_BOARD_ID, boardSlug: 'tech', submissionId: VALID_BZZ, submissionRef: VALID_BZZ }],
+    };
+    const errors = validateGlobalIndex(gi);
+    assert.ok(errors.some(e => e.includes('keccak256')));
   });
 });
 

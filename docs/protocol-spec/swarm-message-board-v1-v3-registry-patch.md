@@ -200,7 +200,7 @@ This simplification removes a protocol-level coupling between content authorship
 | `userFeedEntry` | **New type** |
 | `boardIndex` | `boardId` must be a hash |
 | `threadIndex` | No changes |
-| `globalIndex` | `entries[].boardId` must be a hash |
+| `globalIndex` | `entries[].boardId` must be a hash; `entries[].boardSlug` added (required, must match boardId) |
 | `curatorProfile` | No changes |
 
 ## Contract Surface Summary (V3 vs V2)
