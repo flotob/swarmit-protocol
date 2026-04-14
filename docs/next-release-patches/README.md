@@ -13,5 +13,6 @@ When a patch is adopted, the relevant normative text should be merged into the c
 ## Current Drafts
 
 - [Board Slug Canonicalization Patch](./board-slug-canonicalization-patch.md)
+- [Global Index Board Slug Patch](./global-index-board-slug-patch.md)
 - [Vote Stats Read Helper Patch](./vote-stats-read-helper-patch.md)
 - [V3 User Feed Registry Patch](./v3-user-feed-registry-patch.md)
